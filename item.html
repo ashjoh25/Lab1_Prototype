@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stuff Inventory</title>
+
+    <!-- Materialize CSS and Icons-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+    <style>
+        form {
+            border: solid 2px lightgrey;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        form:focus-within {
+            border-color: #553555;
+        }
+
+        tr:hover {
+            background-color: #F0F0F0;
+        }
+    </style>
+</head>
+
+<body class = "green lighten-3">
+    
+    <!-- Actual page content! -->
+    <div class="container">
+        <div class="section flow-text" id="stuffDetail">
+            <h1>Plant details:</h1>
+            <a class="btn-small waves-effect waves-light" href="stuff.html">
+                <i class="material-icons left">arrow_back</i>Return to Greenhouse
+            </a>
+            <table>
+                <tr>
+                    <th>Plants:</th>
+                    <td>N/A</td>
+                </tr>
+                <tr>
+                    <th>Quantity:</th>
+                    <td>N/A</td>
+
+                </tr>
+                <tr>
+                    <th>Information:</th>
+                    <td>
+                        N/A
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section" id="stuffControls">
+            <a class="btn-floating pulse waves-effect waves-light orange left modal-trigger" href="#stuffEdit">
+                <i class="material-icons right">edit</i>
+            </a>
+            <a class="btn-floating pulse waves-effect waves-light red right">
+                <i class="material-icons right">delete</i>
+            </a>
+        </div>
+
+
+        <div class="modal" id="stuffEdit">
+
+            <div class="modal-content">
+
+                <h2>Edit plant:</h2>
+                <form>
+                    <div class="row">
+                        <div class="input-field col s6">
+                            <label for="nameInput">Plant Name:</label>
+                            <input type="text" name="name" id="nameInput" class="validate" data-length="32" required>
+                        </div>
+                        <div class="input-field col s6">
+                            <label for="quantityInput">Plant Quantity:</label>
+                            <input type="number" name="quantity" id="quantityInput" value=1 required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="input-field col s12">
+                            <label for="descriptionInput">Plant Information:</label>
+                            <input type="text" name="description" id="descriptionInput" data-length="100">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn waves-effect waves-light " type="submit">
+                            <i class="material-icons right">send</i>
+                            Submit
+                        </button>
+                        <button class="modal-close waves-effect waves-green btn-flat">Nvm</button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Materialize JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+    <!-- initialize Materialize elements -->
+    <script> M.AutoInit();</script>
+
+</body>
+
+</html>
