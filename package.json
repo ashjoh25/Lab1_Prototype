@@ -1,0 +1,23 @@
+{
+  "name": "lab1_prototype",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ashjoh25/Lab1_Prototype.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ashjoh25/Lab1_Prototype/issues"
+  },
+  "homepage": "https://github.com/ashjoh25/Lab1_Prototype#readme",
+  "dependencies": {
+    "express": "^4.18.2",
+    "morgan": "^1.10.0"
+  }
+}
