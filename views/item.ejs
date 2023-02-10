@@ -39,19 +39,16 @@
             </a>
             <table>
                 <tr>
-                    <th>Plants:</th>
-                    <td>N/A</td>
+                    <th>Item:</th>
+                    <td><%= item %></td>
                 </tr>
                 <tr>
                     <th>Quantity:</th>
-                    <td>N/A</td>
-
+                    <td><%= quantity %></td>
                 </tr>
                 <tr>
-                    <th>Information:</th>
-                    <td>
-                        N/A
-                    </td>
+                    <th>Description:</th>
+                    <td><%= description %></td>
                 </tr>
             </table>
         </div>
@@ -60,8 +57,8 @@
             <a class="btn-floating pulse waves-effect waves-light orange left modal-trigger" href="#stuffEdit">
                 <i class="material-icons right">edit</i>
             </a>
-            <a class="btn-floating pulse waves-effect waves-light red right">
-                <i class="material-icons right">delete</i>
+            <a class="btn-large waves-effect waves-light red right"  href="/views/stuff/item/<%= id %>/delete">
+                <i class="material-icons right">delete</i>Delete
             </a>
         </div>
 
@@ -71,22 +68,21 @@
             <div class="modal-content">
 
                 <h2>Edit plant:</h2>
+                <form method="post" action="/views/stuff/item/<%= id%>"> <!-- default action is the page's URL --> 
                 <form>
                     <div class="row">
                         <div class="input-field col s6">
                             <label for="nameInput">Plant Name:</label>
-                            <input type="text" name="name" id="nameInput" class="validate" data-length="32" required>
-                        </div>
+                            <input type="text" name="name" id="nameInput" class="validate" data-length="32" value="<%= item%>" required>                        </div>
                         <div class="input-field col s6">
                             <label for="quantityInput">Plant Quantity:</label>
-                            <input type="number" name="quantity" id="quantityInput" value=1 required>
+                            <input type="number" name="quantity" id="quantityInput" value=<%= quantity%> required>
                         </div>
                     </div>
                     <div class="row">
                         <div class="input-field col s12">
                             <label for="descriptionInput">Plant Information:</label>
-                            <input type="text" name="description" id="descriptionInput" data-length="100">
-                        </div>
+                            <input type="text" name="description" id="descriptionInput" data-length="100" value="<%= description%>">                        </div>
                     </div>
                     <div class="modal-footer">
                         <button class="btn waves-effect waves-light " type="submit">
