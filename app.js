@@ -12,11 +12,26 @@ app.use(helmet({
         fontSrc: ["'self'", 'fonts.googleapis.com']
       }
     }
-  })); 
+})); 
+const config = {
+    authRequired: false,
+    auth0Logout: true,
+    secret: process.env.AUTH0_SECRET,
+    baseURL: process.env.AUTH0_BASE_URL,
+    clientID: process.env.AUTH0_CLIENT_ID,
+    issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL
+  };
+  
+  // auth router attaches /login, /logout, and /callback routes to the baseURL
+  app.use(auth(config));
 const port = process.env.PORT || 8080;
 const logger = require("morgan");
 const db = require('./db/db_pool');
 const helmet = require("helmet"); //add this
+const { auth } = require('express-openid-connect');
+const { requiresAuth } = require('express-openid-connect');
+const dotenv = require('dotenv');
+dotenv.config();
 // Configure Express to use EJS
 app.set( "views",  __dirname + "/views");
 app.set( "view engine", "ejs" );
@@ -26,6 +41,9 @@ app.listen( port, () => {
     console.log(`App server listening on ${ port }. (Go to http://localhost:${ port })` );
 } );
 
+// auth router attaches /login, /logout, and /callback routes to the baseURL
+app.use(auth(config));
+
 // Configure Express to parse URL-encoded POST request bodies (traditional forms)
 app.use( express.urlencoded({ extended: false }) );
 
@@ -34,6 +52,15 @@ app.use(logger("dev"));
 
 // define middleware that serves static resources in the public directory
 app.use(express.static(__dirname + '/public'));
+
+app.get('/profile', requiresAuth(), (req, res) => {
+    res.send(JSON.stringify(req.oidc.user));
+  });
+
+// req.isAuthenticated is provided from the auth router
+app.get('/', (req, res) => {
+    res.send(req.oidc.isAuthenticated() ? 'Logged in' : 'Logged out');
+  });
 
 // define a route for the default home page
 app.get( "/", ( req, res ) => {
