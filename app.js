@@ -53,6 +53,12 @@ app.use(logger("dev"));
 // define middleware that serves static resources in the public directory
 app.use(express.static(__dirname + '/public'));
 
+app.use((req, res, next) => {
+    res.locals.isLoggedIn = req.oidc.isAuthenticated();
+    res.locals.user = req.oidc.user;
+    next();
+})
+
 app.get('/profile', requiresAuth(), (req, res) => {
     res.send(JSON.stringify(req.oidc.user));
   });
@@ -79,7 +85,7 @@ app.get( "/views/stuff", ( req, res ) => {
         if (error)
             res.status(500).send(error); //Internal Server Error
         else {
-            res.render('stuff', { inventory : results });
+            res.render('stuff', { inventory : results , loggedIn : res.oidc.isAuthenticated });;
         }
     });
 } );
