@@ -13,8 +13,7 @@ const config = {
     issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL
   };
   
-  // auth router attaches /login, /logout, and /callback routes to the baseURL
-  app.use(auth(config));
+  
 const port = process.env.PORT || 8080;
 const logger = require("morgan");
 const db = require('./db/db_pool');
