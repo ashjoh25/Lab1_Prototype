@@ -3,16 +3,7 @@ const express = require( "express" );
 const app = express();
 //Configure Express to use certain HTTP headers for security
 //Explicitly set the CSP to allow certain sources
-app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", 'cdnjs.cloudflare.com'],
-        styleSrc: ["'self'", 'cdnjs.cloudflare.com', 'fonts.googleapis.com'],
-        fontSrc: ["'self'", 'fonts.googleapis.com']
-      }
-    }
-})); 
+
 const config = {
     authRequired: false,
     auth0Logout: true,
@@ -43,6 +34,17 @@ app.listen( port, () => {
 
 // auth router attaches /login, /logout, and /callback routes to the baseURL
 app.use(auth(config));
+
+app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", 'cdnjs.cloudflare.com'],
+        styleSrc: ["'self'", 'cdnjs.cloudflare.com', 'fonts.googleapis.com'],
+        fontSrc: ["'self'", 'fonts.googleapis.com']
+      }
+    }
+})); 
 
 // Configure Express to parse URL-encoded POST request bodies (traditional forms)
 app.use( express.urlencoded({ extended: false }) );
