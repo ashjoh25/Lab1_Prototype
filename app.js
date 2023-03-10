@@ -4,14 +4,6 @@ const app = express();
 //Configure Express to use certain HTTP headers for security
 //Explicitly set the CSP to allow certain sources
 
-const config = {
-    authRequired: false,
-    auth0Logout: true,
-    secret: process.env.AUTH0_SECRET,
-    baseURL: process.env.AUTH0_BASE_URL,
-    clientID: process.env.AUTH0_CLIENT_ID,
-    issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL
-  };
   
   
 const port = process.env.PORT || 8080;
@@ -30,6 +22,16 @@ app.set( "view engine", "ejs" );
 app.listen( port, () => {
     console.log(`App server listening on ${ port }. (Go to http://localhost:${ port })` );
 } );
+
+
+const config = {
+    authRequired: false,
+    auth0Logout: true,
+    secret: process.env.AUTH0_SECRET,
+    baseURL: process.env.AUTH0_BASE_URL,
+    clientID: process.env.AUTH0_CLIENT_ID,
+    issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL
+  };
 
 // auth router attaches /login, /logout, and /callback routes to the baseURL
 app.use(auth(config));
@@ -65,7 +67,7 @@ app.get('/profile', requiresAuth(), (req, res) => {
   });
 
 // req.isAuthenticated is provided from the auth router
-app.get('/', (req, res) => {
+app.get('/test', (req, res) => {
     res.send(req.oidc.isAuthenticated() ? 'Logged in' : 'Logged out');
   });
 
