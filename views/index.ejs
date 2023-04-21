@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stuff Inventory</title>
+    <title>Task Manager</title>
 
     <!-- Materialize CSS and Icons-->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
@@ -38,13 +38,13 @@
     <header>
         <nav>
             <div class="nav-wrapper">
-                <a href="/" class="brand-logo">Stuff Manager</a>
-                <a href="#" data-target="mobile-nav" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+                <a href="/" class="brand-logo">Task Manager</a>
+                <a href="#" data-target="mobile-nav" class="sidenav-trigger"><i class="material-icons">Task Manager</i></a>
                 <ul id="desktop-nav" class="right hide-on-med-and-down">
-                    <li><a href="/"><i class="material-icons left">home</i>Home</a></li>
-                    <li><a href="/stuff"><i class="material-icons left">list</i>Inventory</a></li>
+                    <li><a href="/"><i class="material-icons left"></i>Home</a></li>
+                    <li><a href="/stuff"><i class="material-icons left"></i>Tasks</a></li>
                     <% if (isLoggedIn) { %>
-                        <li><a href="/profile"><i class="material-icons left">person</i> Hello, <%=user.name%></a> </li>
+                        <li><a href="/profile"><i class="material-icons left"></i> Hello, <%=user.name%></a> </li>
                         <li><a href="/logout" class="btn red">Logout</a></li>                        
                     <% } else { %>
                         <li><a href="/login" class="btn blue">Login</a></li>
@@ -54,7 +54,7 @@
         </nav>
         <ul id="mobile-nav" class="sidenav">
              <li><a href="/"><i class="material-icons left">home</i>Home</a></li>
-             <li><a href="/stuff"><i class="material-icons left">list</i>Inventory</a></li>
+             <li><a href="/views/stuff"><i class="material-icons left">list</i>Tasks</a></li>
              <% if (isLoggedIn) { %>
                 <li><a href="/profile"><i class="material-icons left">person</i> Hello, <%=user.name%></a> </li>
                 <li><a href="/logout" class="btn red">Logout</a></li>                        
@@ -73,15 +73,13 @@
     <script src="/scripts/materializeAutoinit.js"></script>
     <!-- Actual page content! -->
     <div class="container center-align">
-        <h1 class = center-align >Hello!</h1>
-        <h2 class = center-align>Document the plants in your greenhouse.</h2>
-            <a class="btn valign-wrapper " href="/views/stuff/">
-                Take me there
-                <i class="material-icons valign-wrapper">call_missed_outgoing</i>
+        <h1 class = center-align >Welcome!</h1>
+        <h2 class = center-align>This is your personal task manager.</h2>
+            <a class="btn valign-wrapper " href="/views/stuff">
+                Get Started!
+                <i class="material-icons valign-wrapper"></i>
             </a>
-        <h3 class = center-align>
-            <img class="center-align" src="/public/images/plant.jpg" width = 200 height = auto></h3>
-            
+        <h3 class = center-align>            
     </div>
 
 </body>

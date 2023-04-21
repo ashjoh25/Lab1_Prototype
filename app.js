@@ -1,28 +1,38 @@
 //set up the server
+const DEBUG = true;
 const express = require( "express" );
+const logger = require("morgan");
+const { auth } = require('express-openid-connect');
+const { requiresAuth } = require('express-openid-connect');
+const dotenv = require('dotenv');
+dotenv.config();
+
+const helmet = require("helmet"); //add this
+const db = require('./db/db_connection');
 const app = express();
+const port = process.env.PORT || 8080;
+
 //Configure Express to use certain HTTP headers for security
 //Explicitly set the CSP to allow certain sources
 
   
   
-const port = process.env.PORT || 8080;
-const logger = require("morgan");
-const db = require('./db/db_pool');
-const helmet = require("helmet"); //add this
-const { auth } = require('express-openid-connect');
-const { requiresAuth } = require('express-openid-connect');
-const dotenv = require('dotenv');
-dotenv.config();
 // Configure Express to use EJS
 app.set( "views",  __dirname + "/views");
 app.set( "view engine", "ejs" );
 
-// start the server
-app.listen( port, () => {
-    console.log(`App server listening on ${ port }. (Go to http://localhost:${ port })` );
-} );
-
+// Configure Express to use certain HTTP headers for security
+//Explicitly set the CSP to alow the source of Materialize
+app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", 'cdnjs.cloudflare.com'],
+        styleSrc: ["'self'", 'cdnjs.cloudflare.com', 'fonts.googleapis.com'],
+        fontSrc: ["'self'", 'fonts.googleapis.com']
+      }
+    }
+})); 
 
 const config = {
     authRequired: false,
@@ -35,17 +45,6 @@ const config = {
 
 // auth router attaches /login, /logout, and /callback routes to the baseURL
 app.use(auth(config));
-
-app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", 'cdnjs.cloudflare.com'],
-        styleSrc: ["'self'", 'cdnjs.cloudflare.com', 'fonts.googleapis.com'],
-        fontSrc: ["'self'", 'fonts.googleapis.com']
-      }
-    }
-})); 
 
 // Configure Express to parse URL-encoded POST request bodies (traditional forms)
 app.use( express.urlencoded({ extended: false }) );
@@ -62,9 +61,13 @@ app.use((req, res, next) => {
     next();
 })
 
+app.get('/authtest', (req, res) => {
+    res.send(req.oidc.isAuthenticated() ? 'Logged in' : 'Logged out');
+});
+
 app.get('/profile', requiresAuth(), (req, res) => {
     res.send(JSON.stringify(req.oidc.user));
-  });
+});
 
 // req.isAuthenticated is provided from the auth router
 app.get('/test', (req, res) => {
@@ -76,100 +79,193 @@ app.get( "/", ( req, res ) => {
     res.render('index');
 });
 
-// define a route for the stuff inventory page
-const read_stuff_all_sql = `
+const read_categories_all_sql = `
     SELECT 
-        id, item, quantity
+        categoryId, categoryName
     FROM
-        stuff
+        categories
 `
-app.get( "/views/stuff", ( req, res ) => {
-    db.execute(read_stuff_all_sql, (error, results) => {
-        if (error)
-            res.status(500).send(error); //Internal Server Error
+
+
+// define a route for the task list page
+const read_tasks_all_sql = `
+    SELECT 
+        taskId, title, priority, tasks.categoryId as categoryId, categoryName,
+        DATE_Format(dueDate, "%m/%d/%Y (%W)")
+    FROM
+        tasks
+    JOIN categories
+        ON tasks.categoryId = categories.categoryId
+`
+app.get( "/stuff", ( req, res ) => {
+    db.execute(read_tasks_all_sql, req.oidc.user.email, (error, results) => {
+        if (DEBUG)
+            console.log(error ? error : results);
+        if (error2)
+            res.status(500).send(error2); //Internal Server Error
         else {
-            res.render('stuff', { inventory : results , loggedIn : res.oidc.isAuthenticated });;
+            db.execute(read_categories_all_sql, (error2, results2) => {
+                if (DEBUG)
+                    console.log(error2 ? error2 : results2);
+                if (error2)
+                    res.status(500).sendStatus(error2);
+                else {
+                    let data = {tasklist: results, categorylist: results2}
+                    res.render('tasks', data);
+;                }
+            })
         }
     });
 } );
 
-// define a route for the item detail page
-const read_stuff_item_sql = `
-    SELECT 
-        id, item, quantity, description 
+//define a rout for the task detail page
+const read_task_detail_sql = `
+    SELECT
+        taskId, title, priority, tasks.categoryId as categoryId, categoryName,
+        DATE_FORMAT(dueDate, "%W, %M %D %Y") AS dueDateExtended,
+        DATE_FORMAT(dueDate, "%Y-%m-%d") AS dueDateYMD,
+        description
     FROM
-        stuff
+        tasks
+    JOIN categories
+        ON tasks.categoryId = categories.categoryId
     WHERE
-        id = ?
+        taskId = ?
 `
-app.get( "/views/stuff/item/:id", ( req, res ) => {
-    db.execute(read_stuff_item_sql, [req.params.id], (error, results) => {
+
+app.get( "/views/stuff/:id", requiresAuth(), ( req, res ) => {
+    db.execute(read_task_detail_sql, [req.params.id, req.oidc.user.email], (error, results) => {
+        if (DEBUG)
+            console.log(error ? error : results);
         if (error)
             res.status(500).send(error); //Internal Server Error
         else if (results.length == 0)
-            res.status(404).send(`No item found with id = "${req.params.id}"` ); // NOT FOUND
+            res.status(404).send(`No task found with id = "${req.params.id}"` ); // NOT FOUND
         else {
-            let data = results[0]; // results is still an array
-            // data's object structure: 
-            //  { id: ____, item: ___ , quantity:___ , description: ____ }
-            res.render('item', data);
+            
+            db.execute(read_categories_all_sql, (error2, results2) => {
+                if (DEBUG)
+                    console.log(error2 ? error2 : results2);
+                if (error2)
+                    res.status(500).send(error2); //Internal Server Error
+                else {
+                    let data = {task: results[0], categorylist: results2};
+                    res.render('item', data);
+                    // data's object structure: 
+                    //  { hwlist: [
+                    //     {  id: __ , title: __ , priority: __ , subject: __ ,  dueDateFormatted: __ },
+                    //     {  id: __ , title: __ , priority: __ , subject: __ ,  dueDateFormatted: __ },
+                    //     ...],
+                    //     subjectlist : [
+                    //         {subjectId: ___, subjectName: ___}, ...
+                    //     ]
+                    //  }
+                }
+            })
+
+
         }
     });
 });
 
-// define a route for item DELETE
-const delete_item_sql = `
-    DELETE 
-    FROM
-        stuff
-    WHERE
-        id = ?
+// define a route for task CREATE
+const create_task_sql = `
+    INSERT INTO tasks
+        (title, priority, categoryId, dueDate)
+    VAUES
+        (?, ?, ?, ?);
 `
-app.get("/views/stuff/item/:id/delete", ( req, res ) => {
-    db.execute(delete_item_sql, [req.params.id], (error, results) => {
+app.post("/views/stuff", (req, res) => {
+    db.execute(create_task_sql, [req.body.title, req.body.priority, req.body.category, req.body.dueDate, req.params.id, req.oidc.user.email], (error, results) => {
         if (error)
-            res.status(500).send(error); //Internal Server Error
+            res.status(500).send(error);
         else {
-            res.redirect("/stuff");
+            res.redirect(`/views/stuff/${results.insertId}`);
         }
-    });
+    })
 })
 
-// define a route for item Create
-const create_item_sql = `
-    INSERT INTO stuff
-        (item, quantity)
-    VALUES
-        (?, ?)
-`
-app.post("/views/stuff", ( req, res ) => {
-    db.execute(create_item_sql, [req.body.name, req.body.quantity], (error, results) => {
-        if (error)
-            res.status(500).send(error); //Internal Server Error
-        else {
-            //results.insertId has the primary key (id) of the newly inserted element.
-            res.redirect(`/stuff/item/${results.insertId}`);
-        }
-    });
-})
-
-// define a route for item UPDATE
-const update_item_sql = `
+// define a route for assignment UPDATE
+const update_task_sql = `
     UPDATE
-        stuff
+        tasks
     SET
-        item = ?,
-        quantity = ?,
+        title = ?,
+        priority = ?,
+        categoryId = ?,
+        dueDate = ?,
         description = ?
     WHERE
         id = ?
 `
-app.post("/views/stuff/item/:id", ( req, res ) => {
-    db.execute(update_item_sql, [req.body.name, req.body.quantity, req.body.description, req.params.id], (error, results) => {
+app.post("/views/stuff/:id", (req, res) => {
+    db.execute(update_task_sql, [req.body.title, req.body.quantity, req.body.category, req.body.dueDate, req.body.description, req.params.id, req.oidc.user.email], (error, results) => {
+        if (error)
+            res.status(500).send(error);
+        else {
+            res.redirect(`/views/stuff/${req.params.id}`);
+        }
+    })
+})
+// define a route for item DELETE
+const delete_task_sql = `
+    DELETE 
+    FROM
+        tasks
+    WHERE
+        id = ?
+`
+app.get("/views/stuff/:id/delete", requiresAuth(), ( req, res ) => {
+    db.execute(delete_task_sql, [req.params.id, req.oidc.user.email], (error, results) => {
         if (error)
             res.status(500).send(error); //Internal Server Error
         else {
-            res.redirect(`/stuff/item/${req.params.id}`);
+            res.redirect("/views/stuff");
         }
     });
 })
+
+// // define a route for item Create
+// const create_item_sql = `
+//     INSERT INTO stuff
+//         (item, quantity, userid)
+//     VALUES
+//         (?, ?, ?)
+// `
+// app.post("/views/stuff", ( req, res ) => {
+//     db.execute(create_item_sql, [req.body.name, req.body.quantity, req.oidc.user.email], (error, results) => {
+//         if (error) {
+//             res.status(500).send(error);} //Internal Server Error
+//         else {
+//             //results.insertId has the primary key (id) of the newly inserted element.
+//             res.redirect(`/stuff/item/${results.insertId}`);
+//         }
+    
+// });
+
+// // define a route for item UPDATE
+// const update_item_sql = `
+//     UPDATE
+//         stuff
+//     SET
+//         item = ?,
+//         quantity = ?,
+//         description = ?
+//     WHERE
+//         id = ?
+//     AND
+//         userid = ?
+// `
+// app.post("/views/stuff/item/:id", requiresAuth(), ( req, res ) => {
+//     db.execute(update_item_sql, [req.body.name, req.body.quantity, req.body.description, req.params.id, req.oidc.user.email], (error, results) => {
+//         if (error)
+//             res.status(500).send(error); //Internal Server Error
+//         else {
+//             res.redirect(`/stuff/item/${req.params.id}`);
+//         }
+//     });
+// })});
+
+app.listen( port, () => {
+    console.log(`App server listening on ${ port }. (Go to http://localhost:${ port })` );
+} );

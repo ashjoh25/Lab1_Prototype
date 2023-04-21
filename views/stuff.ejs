@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stuff Inventory</title>
+    <title>Task List</title>
 
     <!-- Materialize CSS and Icons-->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
@@ -59,13 +59,15 @@
     <!-- Actual page content! -->
     <div class="container">
         <div class="section" id="stuffList">
-            <h1>Plants</h1>
+            <h1>Your Tasks:</h1>
             <table>
                 <thead>
 
                     <tr>
-                        <th>Plant Types</th>
-                        <th>Quantity</th>
+                        <th>Tasks</th>
+                        <th>Priority</th>
+                        <th>Category</th>
+                        <th>Due Date</th>
                         <th></th>
                     </tr>
 
@@ -73,8 +75,10 @@
                 <tbody>
                     <% for (let i = 0; i < inventory.length; i++) { %>
                     <tr>
-                        <td><%= inventory[i].item %></td>
-                        <td><%= inventory[i].quantity %></td>
+                        <td><%= inventory[i].title %></td>
+                        <td><%= inventory[i].priority %></td>
+                        <td><%= inventory[i].categoryName %></td>
+                        <td><%= inventory[i].dueDateFormatted %></td>
                         <td>
                             <a class="btn-small waves-effect waves-light" href=<%= "/views/stuff/item/" + inventory[i].id %> ><i
                                     class="material-icons right">edit</i>Info/Edit</a>
@@ -90,17 +94,34 @@
         </div>
 
         <div class="section" id="stuffAdd">
-            <h2>Add plants:</h2>
+            <h2>Add a task:</h2>
             <form method="post" action="/views/stuff"> 
             <form>
                 <div class="row">
                     <div class="input-field col s6">
-                        <label for="nameInput">Plant Name:</label>
+                        <label for="titleInput">Task title:</label>
                         <input type="text" name="name" id="nameInput" class="validate" data-length="32" required>
                     </div>
                     <div class="input-field col s6">
-                        <label for="quantityInput">Plant Quantity:</label>
-                        <input type="number" name="quantity" id="quantityInput" value=1 required>
+                        <label for="priorityInput">Priority (1-10):</label>
+                        <input type="number" name="priority" id="priorityInput" class = "validate" min=1 max=10 value="5">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="input-field col s6">
+                        <select id="categoryInput" name="category" required>
+                            <option value="" disabled selected>Choose your category</option>
+                            <% for (let i = 0; i < categorylist.length; i++) { %>
+                                <option value=<%=categorylist[i].categoryId %>><%= categorylist[i].categoryName %></option>
+                            <% } %>
+                        </select>
+                        <label for="categoryInput">Category:</label>
+                    </div>
+
+                    <div class="input-field col s6">
+                        <input type="date" id="dueDateInput" name="dueDate">
+                        <label for="dueDateInput">Due Date:</label>
                     </div>
                 </div>
                 <button class="btn waves-effect waves-light" type="submit">
