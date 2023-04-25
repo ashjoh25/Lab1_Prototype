@@ -17,6 +17,7 @@ const create_categories_table_sql = `
     CREATE TABLE categories (
         categoryId INT NOT NULL AUTO_INCREMENT,
         categoryName VARCHAR(45) NOT NULL,
+        userId VARCHAR(225) NULL,
         PRIMARY KEY (categoryId));
 `
 
@@ -27,9 +28,10 @@ const create_tasks_table_sql = `
         taskid INT NOT NULL AUTO_INCREMENT,
         title VARCHAR(45) NOT NULL,
         priority INT NULL,
-        categoryId INT NOT Null,
+        categoryId INT NOT NULL,
         dueDate DATE NULL,
         description VARCHAR(150) NULL,
+        userId VARCHAR(255) NULL,
         PRIMARY KEY (taskid),
         INDEX taskCategory_idx (categoryId ASC),
         CONSTRAINT taskCategory

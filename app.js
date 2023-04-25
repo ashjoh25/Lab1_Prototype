@@ -2,6 +2,8 @@
 const DEBUG = true;
 const express = require( "express" );
 const logger = require("morgan");
+const path = require("path");
+const fs = require("fs");
 const { auth } = require('express-openid-connect');
 const { requiresAuth } = require('express-openid-connect');
 const dotenv = require('dotenv');
@@ -9,6 +11,7 @@ dotenv.config();
 
 const helmet = require("helmet"); //add this
 const db = require('./db/db_connection');
+const res = require("express/lib/response");
 const app = express();
 const port = process.env.PORT || 8080;
 
@@ -18,7 +21,7 @@ const port = process.env.PORT || 8080;
   
   
 // Configure Express to use EJS
-app.set( "views",  __dirname + "/views");
+app.set( "views",  path.join(__dirname , "views"));
 app.set( "view engine", "ejs" );
 
 // Configure Express to use certain HTTP headers for security
@@ -53,7 +56,7 @@ app.use( express.urlencoded({ extended: false }) );
 app.use(logger("dev"));
 
 // define middleware that serves static resources in the public directory
-app.use(express.static(__dirname + '/public'));
+app.use(express.static(path.join(__dirname , 'public')));
 
 app.use((req, res, next) => {
     res.locals.isLoggedIn = req.oidc.isAuthenticated();
@@ -79,24 +82,11 @@ app.get( "/", ( req, res ) => {
     res.render('index');
 });
 
-const read_categories_all_sql = `
-    SELECT 
-        categoryId, categoryName
-    FROM
-        categories
-`
-
+const read_categories_all_sql = fs.readFileSync(path.join(__dirname, "db", "queries", "crud", "read_categories_all.sql"), {encoding : "UTF-8"});
 
 // define a route for the task list page
-const read_tasks_all_sql = `
-    SELECT 
-        taskId, title, priority, tasks.categoryId as categoryId, categoryName,
-        DATE_Format(dueDate, "%m/%d/%Y (%W)")
-    FROM
-        tasks
-    JOIN categories
-        ON tasks.categoryId = categories.categoryId
-`
+const read_tasks_all_sql = fs.readFileSync(path.join(__dirname, "db", "queries", "crud", "read_tasks_all.sql"), {encoding : "UTF-8"});
+
 app.get( "/stuff", ( req, res ) => {
     db.execute(read_tasks_all_sql, req.oidc.user.email, (error, results) => {
         if (DEBUG)
@@ -119,19 +109,8 @@ app.get( "/stuff", ( req, res ) => {
 } );
 
 //define a rout for the task detail page
-const read_task_detail_sql = `
-    SELECT
-        taskId, title, priority, tasks.categoryId as categoryId, categoryName,
-        DATE_FORMAT(dueDate, "%W, %M %D %Y") AS dueDateExtended,
-        DATE_FORMAT(dueDate, "%Y-%m-%d") AS dueDateYMD,
-        description
-    FROM
-        tasks
-    JOIN categories
-        ON tasks.categoryId = categories.categoryId
-    WHERE
-        taskId = ?
-`
+const read_task_detail_sql = fs.readFileSync(path.join(__dirname, "db", "queries", "crud", "read_task_detail.sql"), {encoding : "UTF-8"});
+
 
 app.get( "/views/stuff/:id", requiresAuth(), ( req, res ) => {
     db.execute(read_task_detail_sql, [req.params.id, req.oidc.user.email], (error, results) => {
@@ -169,12 +148,8 @@ app.get( "/views/stuff/:id", requiresAuth(), ( req, res ) => {
 });
 
 // define a route for task CREATE
-const create_task_sql = `
-    INSERT INTO tasks
-        (title, priority, categoryId, dueDate)
-    VAUES
-        (?, ?, ?, ?);
-`
+const create_task_sql = fs.readFileSync(path.join(__dirname, "db", "queries", "crud", "create_task.sql"), {encoding : "UTF-8"});
+    
 app.post("/views/stuff", (req, res) => {
     db.execute(create_task_sql, [req.body.title, req.body.priority, req.body.category, req.body.dueDate, req.params.id, req.oidc.user.email], (error, results) => {
         if (error)
@@ -186,18 +161,8 @@ app.post("/views/stuff", (req, res) => {
 })
 
 // define a route for assignment UPDATE
-const update_task_sql = `
-    UPDATE
-        tasks
-    SET
-        title = ?,
-        priority = ?,
-        categoryId = ?,
-        dueDate = ?,
-        description = ?
-    WHERE
-        id = ?
-`
+const update_task_sql = fs.readFileSync(path.join(__dirname, "db", "queries", "crud", "update_task.sql"), {encoding : "UTF-8"});
+
 app.post("/views/stuff/:id", (req, res) => {
     db.execute(update_task_sql, [req.body.title, req.body.quantity, req.body.category, req.body.dueDate, req.body.description, req.params.id, req.oidc.user.email], (error, results) => {
         if (error)
@@ -205,8 +170,8 @@ app.post("/views/stuff/:id", (req, res) => {
         else {
             res.redirect(`/views/stuff/${req.params.id}`);
         }
-    })
-})
+    });
+});
 // define a route for item DELETE
 const delete_task_sql = `
     DELETE 
@@ -223,8 +188,41 @@ app.get("/views/stuff/:id/delete", requiresAuth(), ( req, res ) => {
             res.redirect("/views/stuff");
         }
     });
-})
+});
 
+const read_subjects_all_alphabetical_sql = `
+    SELECT
+        categoryId, categoryName
+    FROM
+        categories
+    Where
+        userId = ?
+    ORDER BY
+        categoryName ASC
+`
+
+app.get('/categories', requiresAuth(), (req, res) => {
+    db.execute(read_subjects_all_alphabetical_sql, [req.oidc.user.sub], (error, results) => {
+        if (DEBUG)
+            console.log(error ? error : results);
+        if (error)
+            res.status(500).send(error); //Internal Server Error
+        else {
+            res.redirect("/categories");
+        }
+    })
+});
+
+const create_subject_sql = `
+    INSERT INTO categories
+        (categoryName, userId)
+    VALUES
+        (?, ?)
+`
+
+app.post('/categories', requiresAuth(), (req, res) => {
+    db.execute(create_subject_sql, [req.body.categoryName, req.oidc.user.sub],)
+})
 // // define a route for item Create
 // const create_item_sql = `
 //     INSERT INTO stuff
